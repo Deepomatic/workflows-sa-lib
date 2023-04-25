@@ -3,13 +3,13 @@ import numpy as np
 import cv2
 import json
 from deepomatic.workflows.v2.cv import google_ocr
-from lib.bbox_utils import denormalize_bbox, normalize_bbox, bb_intersection_over_union, bb_intersection_over_area
+from deepomatic.workflows.v2.entries import Image as Image_wf
+from lib.prediction_processing import denormalize_bbox, normalize_bbox, bb_intersection_over_union, bb_intersection_over_area
 from google.cloud.vision_v1 import AnnotateImageResponse
 
 
-class ProcessedGoogleOCR():
+class GoogleOCRProcessor():
     def __init__(self, image, image_context={"language_hints": ["en"]}, debug=False):
-
         self.debug = debug
         if debug:
             nparr = np.fromstring(image, np.uint8)
@@ -19,6 +19,8 @@ class ProcessedGoogleOCR():
         self.h, self.w = image.height, image.width
 
         # Run text detection
+        if not isinstance(image, Image_wf):
+            image = Image_wf(name='crop', image=image)
         self.raw_response = google_ocr(image, image_context=image_context)
         self.response_json = json.loads(AnnotateImageResponse.to_json(self.raw_response))
         if self.raw_response.text_annotations:
@@ -72,14 +74,6 @@ class ProcessedGoogleOCR():
             sorted_string = ' '.join([x['text'] for x in sorted_temp_info])
             return sorted_string
         return text
-
-    def match_with_detection(self, bbox, default='', iou_thresh=0.5, ioa_thresh=0.5, mode='all'):
-        """
-        Set default to 'text' to return the text read even if no bbox is detected
-        Set mode to 'best' or 'all':
-            'best_word' if you just want to keep only the best 'word' in the ocr predictions,
-            'all' if you want all the matched words to be kept (separated with spaces)
-        """
 
     def locate_word_in_text(self, searched_word):
         annotation = self.response_json['textAnnotations']
