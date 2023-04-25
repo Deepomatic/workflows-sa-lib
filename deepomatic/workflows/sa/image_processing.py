@@ -1,12 +1,10 @@
-import io
 from PIL import Image
-from deepomatic.workflows.utils import load_image
-from lib.bbox_utils import denormalize_bbox
-from lib.logging_utils import logger
+from lib.prediction_processing import denormalize_bbox
+from lib.logging_config import logger
 
 
-def get_crop(image_blob, bbox, extension_factor=None, angle=0, resize_w=None, patchwork=False):
-    image = load_image(io.BytesIO(image_blob))
+def get_crop(image, bbox, extension_factor=None, angle=0, resize_w=None, patchwork=False):
+    "Takes a pil image"
     w = image.size[0]
     h = image.size[1]
 
@@ -50,11 +48,7 @@ def get_crop(image_blob, bbox, extension_factor=None, angle=0, resize_w=None, pa
         # new_im.save(f"./test.png", format="PNG")
         image = new_im
 
-    image_byte_array = io.BytesIO()
-    image.save(image_byte_array, format="PNG")
-    image_byte_array = image_byte_array.getvalue()
-
     # Uncomment below to save image locally
     # image.save(f"./{image.size[0]}.png", format="PNG")
 
-    return image_byte_array
+    return image
